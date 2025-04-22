@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+
+{% block title %}Simplify Marathi Text{% endblock %}
+
+{% block content %}
+<div class="text-center mb-12">
+  <h2 class="text-3xl font-bold mb-2">Simplify Marathi Sentences</h2>
+  <p class="text-gray-500 text-base">A clean, smooth, and intuitive interface to simplify Marathi text instantly.</p>
+</div>
+
+
+
+<div class="grid md:grid-cols-2 gap-8">
+  <!-- Input Section -->
+  <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover-glow">
+    <div class="flex items-center gap-3 mb-4">
+      <i class="fas fa-pencil-alt text-black text-lg"></i>
+      <h3 class="text-lg font-semibold">Input Text</h3>
+    </div>
+    <div class="relative">
+      <textarea id="input-text" placeholder="Paste or type complex Marathi text..." rows="8"
+        class="w-full p-5 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-black focus:outline-none resize-none bg-gray-50 shadow-inner pr-20"
+        oninput="togglePasteButton()"></textarea>
+    
+      <!-- Paste Button -->
+      <button id="paste-btn"
+        onclick="pasteClipboardText()"
+        class="absolute top-1/2 -translate-y-1/2 right-3 bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm opacity-50 hover:opacity-100 transition-all duration-200 flex items-center gap-1">
+        <i class="fas fa-paste"></i> Paste
+      </button>
+    </div>
+    
+    
+    
+    
+<div class="mt-4 flex items-center justify-between text-sm">
+  <div class="flex items-center gap-2 text-gray-500">
+    <i class="fas fa-info-circle text-gray-400"></i>
+    <!-- <span>Marathi Voice Input Enabled</span> -->
+  </div>
+  <div class="flex items-center gap-3">
+    <button id="mic-btn"
+      class="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-black px-3 py-2 rounded-full shadow-sm transition duration-200 flex items-center gap-2"
+      onclick="startSpeechToText()">
+      <!-- <i class="fas fa-microphone text-red-500 animate-pulse" id="mic-icon"></i> -->
+      <!-- <span class="font-medium">Speak</span> -->
+    </button>
+    <!-- <span id="mic-status"
+      class="text-xs text-gray-400 italic transition duration-200 ease-in-out hidden">
+      🎙 Listening...
+    </span> -->
+  </div>
+</div>
+  
+  </div>
+
+  <!-- Output Section -->
+  <div class="relative bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover-glow">
+    <div class="flex items-center gap-3 mb-4">
+      <i class="fas fa-language text-black text-lg"></i>
+      <h3 class="text-lg font-semibold">Simplified Output</h3>
+    </div>
+  
+    <!-- Final Output Textarea -->
+    <textarea id="final-output" placeholder="Simplified text will appear here..." rows="8"
+      class="w-full p-5 text-base border border-gray-300 bg-gray-100 rounded-xl resize-none focus:outline-none text-gray-700 shadow-inner"></textarea>
+
+      <!-- Simplified Options Overlay -->
+      <div id="simplified-options"
+          class="absolute inset-0 bg-white bg-opacity-95 rounded-2xl p-6 z-10 hidden overflow-y-auto">
+        <h3 class="text-lg font-medium mb-3">Choose a Simplified Sentence:</h3>
+        <!-- Options will be injected by JS -->
+      </div>
+    
+      <div class="flex justify-end mt-4 gap-3 items-center">
+        <!-- Combined Language Dropdown + Translate Button -->
+        <div class="flex items-center gap-2 bg-gray-100 rounded-full px-2 py-1 shadow-sm hover:shadow-md transition">
+          <select id="translation-lang"
+            class="text-sm border-none bg-transparent focus:outline-none text-gray-700 cursor-pointer">
+            <option disabled selected>Language</option>
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="gu">Gujarati</option>
+            <option value="bn">Bengali</option>
+          </select>
+          <button id="translate-btn" onclick="openTranslateModal()"
+            class="text-sm bg-black text-white hover:bg-gray-800 px-4 py-1.5 rounded-full transition flex items-center gap-2 relative">
+            <i class="fas fa-language"></i> <span id="translate-btn-text">Translate</span>
+            <span id="translate-btn-loader" class="hidden ml-2 loader-dots"></span>
+          </button>
+
+        </div>
+      
+        <!-- Copy Button -->
+        <button id="copy-btn" class="text-sm px-4 py-2 bg-black text-white hover:bg-gray-800 rounded-full transition flex items-center gap-2">
+          <i class="fas fa-copy"></i> Copy
+        </button>
+        
+      </div>
+      
+      
+    </div>
+  </div>
+
+<!-- Action Button -->
+<div class="mt-12 text-center flex justify-center space-x-4">
+  <button onclick="simplifyText()" class="bg-black hover:bg-gray-800 text-white font-medium px-8 py-3 rounded-full shadow-md text-base transition-all duration-300">
+    <i class="fas fa-magic mr-2"></i> Simplify Now
+  </button>
+  <button onclick="window.location.href='http://localhost:8501';" class="bg-black hover:bg-gray-800 text-white font-medium px-8 py-3 rounded-full shadow-md text-base transition-all duration-300">
+    <i class="fas fa-scroll mr-2"></i> Summarize Now
+  </button>
+</div>
+
+
+
+<!-- Replacement Logs Card -->
+<div id="replacement-logs-container" class="mt-8">
+  <h3 class="text-lg font-semibold mb-3">Word Replacements</h3>
+  <div id="replacement-logs" class="bg-white border border-gray-300 rounded-lg shadow-md p-5 text-sm text-gray-800">
+    <p class="text-gray-500">No replacements yet.</p>
+  </div>
+</div>
+
+<!-- TRANSLATION MODAL -->
+<!-- TRANSLATION MODAL -->
+<div id="translate-modal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center">
+  <div class="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-lg relative animate-fade-in">
+    <button onclick="closeTranslateModal()"
+      class="absolute top-3 right-3 text-gray-400 hover:text-black text-lg">
+      <i class="fas fa-times-circle"></i>
+    </button>
+
+    <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+      <i class="fas fa-globe"></i> Translation Output
+    </h3>
+
+    <div class="mb-4">
+      <label class="text-sm text-gray-600 font-medium block mb-1">Selected Language:</label>
+      <p id="modal-selected-lang" class="text-sm text-gray-800 font-semibold"></p>
+    </div>
+
+    <div class="mb-4">
+      <label class="text-sm text-gray-600 font-medium block mb-1">Original Input:</label>
+      <div id="translate-original" class="bg-gray-50 p-3 text-sm rounded border border-gray-200 text-gray-800 whitespace-pre-wrap"></div>
+    </div>
+
+    <div>
+      <label class="text-sm text-gray-600 font-medium block mb-1">Simplified Output:</label>
+      <div id="translate-simplified" class="bg-gray-50 p-3 text-sm rounded border border-gray-200 text-gray-800 whitespace-pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-12 grid md:grid-cols-2 gap-8 items-stretch">
+  <!-- 📊 Chart Section -->
+  <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-md h-full flex flex-col justify-between">
+    <h3 class="text-xl font-semibold mb-4 text-center"> Model Selection Overview</h3>
+    <canvas id="modelChart" class="w-full max-w-full flex-grow"></canvas>
+  </div>
+
+  <!-- ⚠️ Disclaimer Section -->
+  <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 shadow-md text-sm text-yellow-900 leading-relaxed h-full flex flex-col justify-between">
+    <div>
+      <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+        <i class="fas fa-exclamation-triangle text-yellow-500"></i> Disclaimer
+      </h3>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>This text simplification tool is an experimental system and may not always provide fully accurate results.</li>
+        <li>Simplified outputs are based on predefined logic and AI models, which may not always understand context perfectly.</li>
+        <li>Model 1 (Gloss Model) and Model 2 (Overlapping Model) are rule-based and may miss nuances in complex sentences.</li>
+        <!-- <li>Model 3 (OpenAI ChatGPT) is powered by AI and may occasionally generate unexpected outputs.</li> -->
+        <li>Please verify important outputs manually before use in official communication or educational material.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+
+<script>
+
+
+  const ctx = document.getElementById('modelChart').getContext('2d');
+  
+  const labels = {{ chart_labels|safe }};
+  const values = {{ chart_values|safe }};
+  const highlightIndex = {{ highlight_index }};
+  
+  const backgroundColors = values.map((_, idx) =>
+    idx === highlightIndex ? '#f97316' : '#334155'  // Orange for top, dark for others
+  );
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Model Usage Count',
+        data: values,
+        backgroundColor: backgroundColors,
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y', // 👉 horizontal bars
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end',
+          align: 'right',
+          color: '#000',
+          font: {
+            weight: 'bold'
+          },
+          formatter: value => value
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          },
+          grid: {
+            borderDash: [2, 2]
+          }
+        },
+        y: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  let globalLogId = null;  // Store log_id for tracking selections
+
+  function pasteClipboardText() {
+    navigator.clipboard.readText()
+      .then(text => {
+        const inputBox = document.getElementById("input-text");
+        inputBox.value += (inputBox.value ? " " : "") + text;
+        togglePasteButton(); // Re-check visibility after paste
+        inputBox.focus();
+      })
+      .catch(err => {
+        alert("❌ Failed to access clipboard.");
+        console.error(err);
+      });
+  }
+
+  function togglePasteButton() {
+    const inputBox = document.getElementById("input-text");
+    const pasteBtn = document.getElementById("paste-btn");
+    pasteBtn.classList.toggle("hidden", inputBox.value.trim().length > 0);
+  }
+
+  document.addEventListener("DOMContentLoaded", togglePasteButton);
+
+  document.getElementById("copy-btn").addEventListener("click", function () {
+    const outputText = document.getElementById("final-output").value.trim();
+    if (outputText !== "") {
+      navigator.clipboard.writeText(outputText).then(() => {
+        this.innerHTML = `<i class="fas fa-check text-green-400"></i> Copied!`;
+        setTimeout(() => {
+          this.innerHTML = `<i class="fas fa-copy"></i> Copy`;
+        }, 1500);
+      }).catch(err => {
+        alert("❌ Failed to copy text");
+        console.error(err);
+      });
+    } else {
+      alert("No text to copy!");
+    }
+  });
+
+  function startSpeechToText() {
+    const micStatus = document.getElementById("mic-status");
+    const inputBox = document.getElementById("input-text");
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser doesn't support Speech Recognition. Please use Chrome.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "mr-IN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    micStatus.classList.remove("hidden");
+    micStatus.innerText = "🎙 Listening...";
+
+    recognition.start();
+
+    recognition.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      inputBox.value += (inputBox.value ? " " : "") + transcript;
+    };
+
+    recognition.onend = function () {
+      micStatus.innerText = "✅ Done!";
+      setTimeout(() => micStatus.classList.add("hidden"), 1500);
+      togglePasteButton();
+    };
+
+    recognition.onerror = function (event) {
+      micStatus.innerText = "❌ Error: " + event.error;
+      setTimeout(() => micStatus.classList.add("hidden"), 2000);
+    };
+  }
+
+  function simplifyText() {
+    const inputText = document.getElementById('input-text').value;
+    const outputOverlay = document.getElementById('simplified-options');
+    const logsContainer = document.getElementById('replacement-logs');
+    const finalOutputBox = document.getElementById('final-output');
+
+    // Reset
+    outputOverlay.classList.remove('hidden');
+    outputOverlay.innerHTML = "<p>⏳ Processing...</p>";
+    logsContainer.innerHTML = "";
+    finalOutputBox.value = "";
+
+    fetch("/simplify-ajax/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken()
+      },
+      body: JSON.stringify({ sentence: inputText })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const options = data.simplified_options;
+      const logs = data.logs;
+      globalLogId = data.log_id;  // ✅ Capture the log_id
+
+      let html = "<h3 class='text-lg font-medium mb-3'>Choose a Simplified Sentence:</h3>";
+      options.slice(0, 2).forEach((text, idx) => {
+        html += `
+          <label class="block mb-3">
+            <input type="radio" name="simplified" value="${idx}" onclick="selectOption(${idx})" class="mr-2">
+            ${text}
+          </label>`;
+      });
+
+      outputOverlay.innerHTML = html;
+      window.simplifiedLogs = logs;
+    });
+  }
+
+    function selectOption(index) {
+      const options = document.getElementsByName("simplified");
+      const selected = options[index].nextSibling.textContent.trim();
+      const finalOutputBox = document.getElementById('final-output');
+    
+      // ✅ Set final output textarea
+      finalOutputBox.value = selected;
+    
+      // ✅ Hide the options overlay
+      document.getElementById('simplified-options').classList.add('hidden');
+    
+      // ✅ Send selected model to backend for tracking
+      const logsMap = ['model1', 'model2'];
+      const selectedModel = logsMap[index];
+    
+      fetch("/record-model-selection/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify({ model: selectedModel })
+      }).then(res => res.json())
+        .then(data => {
+          console.log("Model selection recorded:", data);
+        })
+        .catch(err => console.error("Model selection error:", err));
+    
+      // ✅ Show word replacement logs
+      const logList = window.simplifiedLogs[logsMap[index]];
+      let html = "<h4 class='font-semibold mb-2'>Word Replacements:</h4>";
+    
+      if (logList.length > 0) {
+        html += "<ul class='text-sm list-disc pl-5'>";
+        logList.forEach(log => {
+          html += `<li><strong>${log.complex}</strong> ➝ ${log.simple} <em>(${log.gloss})</em></li>`;
+        });
+        html += "</ul>";
+      } else {
+        html += "<p>No replacements made.</p>";
+      }
+      document.getElementById('replacement-logs').innerHTML = html;
+    
+      // ✅ Highlight simplified words inside the output box
+      // (We'll visually indicate replacements in the text itself)
+      let highlightedOutput = selected;
+      logList.forEach(log => {
+        const simpleWord = log.simple;
+        const span = `<mark class="bg-yellow-200 rounded px-1">${simpleWord}</mark>`;
+        const regex = new RegExp(`\\b${simpleWord}\\b`, 'g');
+        highlightedOutput = highlightedOutput.replace(regex, span);
+      });
+    
+      // Optionally show in a separate div if you want
+      const highlightDiv = document.getElementById("highlighted-output");
+      if (highlightDiv) {
+        highlightDiv.classList.remove("hidden");
+        highlightDiv.innerHTML = highlightedOutput;
+      }
+    }
+    
+
+  function openTranslateModal() {
+    const selectedLangDropdown = document.getElementById('translation-lang');
+    const selectedLang = selectedLangDropdown.value;
+    const selectedLangText = selectedLangDropdown.options[selectedLangDropdown.selectedIndex].text;
+    const inputText = document.getElementById('input-text').value.trim();
+    const simplifiedText = document.getElementById('final-output').value.trim();
+
+    if (!selectedLang || selectedLangDropdown.selectedIndex === 0) {
+      alert("Please select a language to translate.");
+      return;
+    }
+
+    document.getElementById('translate-btn-loader').classList.remove('hidden');
+    document.getElementById('translate-btn-text').classList.add('opacity-50');
+
+    fetch("/translate-ajax/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken()
+      },
+      body: JSON.stringify({
+        input_text: inputText,
+        simplified_text: simplifiedText,
+        language: selectedLang
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('translate-btn-loader').classList.add('hidden');
+      document.getElementById('translate-btn-text').classList.remove('opacity-50');
+
+      document.getElementById("modal-selected-lang").innerText = selectedLangText;
+      document.getElementById("translate-original").innerText = data.translated_input;
+      document.getElementById("translate-simplified").innerText = data.translated_simplified;
+      document.getElementById("translate-modal").classList.remove("hidden");
+    })
+    .catch(err => {
+      document.getElementById('translate-btn-loader').classList.add('hidden');
+      document.getElementById('translate-btn-text').classList.remove('opacity-50');
+      alert("Translation error occurred.");
+      console.log(err);
+    });
+  }
+
+  function closeTranslateModal() {
+    document.getElementById('translate-modal').classList.add('hidden');
+  }
+
+  function getCSRFToken() {
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+    return cookie ? cookie.split('=')[1] : '';
+  }
+</script>
+    
+    
+{% endblock %}
+
